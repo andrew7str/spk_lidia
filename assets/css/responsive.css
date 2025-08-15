@@ -1,0 +1,55 @@
+/* assets/css/responsive.css */
+
+/* Media queries for responsiveness */
+@media (max-width: 768px) {
+    .wrapper {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .sidebar-menu {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .sidebar-menu li {
+        margin: 5px 10px;
+    }
+
+    .sidebar-menu a {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    .navbar {
+        padding: 10px 15px;
+    }
+
+    .content-area {
+        padding: 15px;
+    }
+
+    .dashboard-cards {
+        grid-template-columns: 1fr; /* Stack cards on small screens */
+    }
+
+    .login-container {
+        padding: 25px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar-menu a i {
+        margin-right: 5px;
+    }
+    .sidebar-menu a span {
+        display: none; /* Hide text on very small screens, only show icon */
+    }
+}
