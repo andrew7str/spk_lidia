@@ -1,0 +1,58 @@
+ CREATE TABLE users (
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     username VARCHAR(50) NOT NULL UNIQUE,
+     password VARCHAR(255) NOT NULL,
+     role VARCHAR(20) DEFAULT 'admin',
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ CREATE TABLE kriteria (
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     nama_kriteria VARCHAR(100) NOT NULL UNIQUE,
+     tipe_kriteria ENUM('benefit', 'cost') NOT NULL,
+     bobot DECIMAL(5,4) DEFAULT 0.0000,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ CREATE TABLE supplier (
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     nama_supplier VARCHAR(100) NOT NULL UNIQUE,
+     deskripsi TEXT,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ CREATE TABLE nilai_supplier (
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     id_supplier INT NOT NULL,
+     id_kriteria INT NOT NULL,
+     nilai DECIMAL(5,2) NOT NULL,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     FOREIGN KEY (id_supplier) REFERENCES supplier(id) ON DELETE CASCADE,
+     FOREIGN KEY (id_kriteria) REFERENCES kriteria(id) ON DELETE CASCADE,
+     UNIQUE (id_supplier, id_kriteria)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ CREATE TABLE perbandingan_ahp (
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     kriteria1_id INT NOT NULL,
+     kriteria2_id INT NOT NULL,
+     nilai_perbandingan DECIMAL(5,2) NOT NULL,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     FOREIGN KEY (kriteria1_id) REFERENCES kriteria(id) ON DELETE CASCADE,
+     FOREIGN KEY (kriteria2_id) REFERENCES kriteria(id) ON DELETE CASCADE,
+     UNIQUE (kriteria1_id, kriteria2_id)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ CREATE TABLE hasil_seleksi (
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     id_supplier INT NOT NULL,
+     nilai_preferensi DECIMAL(10,8) NOT NULL,
+     ranking INT NOT NULL,
+     tanggal_seleksi DATE NOT NULL,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     FOREIGN KEY (id_supplier) REFERENCES supplier(id) ON DELETE CASCADE
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ INSERT INTO users (username, password, role) VALUES ('admin', 'password_admin', 'admin');
+ SELECT 'Database setup berhasil!' AS message;
+ ) > "%temp_sql%"
