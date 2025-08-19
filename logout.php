@@ -1,5 +1,12 @@
 <?php
-// logout.php
-require_once 'functions/auth.php';
-logout_user(); // Panggil fungsi logout
+session_start();
+
+// Hapus semua variabel sesi
+$_SESSION = array();
+session_destroy();
+
+// Debugging
+echo "Logout berhasil. Mengalihkan ke index.php...";
+header("Location: http://localhost/spk_lidia_fashion/index.php");
+exit();
 ?>
