@@ -127,7 +127,7 @@ spk_lidia_fashion/
 Sistem ini dikembangkan berdasarkan skripsi:
 **"Perancangan dan Implementasi Sistem Pendukung Keputusan untuk Seleksi Supplier Baju pada Toko Lidia Fashion Menggunakan Metode AHP dan TOPSIS"**
 
-## 📞 Support
+## 📞 Support By : Andrew Malsar Sianturi
 
 Jika mengalami kendala dalam penggunaan sistem, pastikan:
 - MySQL service berjalan dengan baik
