@@ -107,19 +107,65 @@ Sistem ini telah divalidasi menggunakan contoh perhitungan manual dari skripsi d
 ## 📁 Struktur File Penting
 
 ```
-spk_lidia_fashion/
-├── functions/
-│   ├── ahp_logic.php          # Logic perhitungan AHP
-│   └── topsis_logic.php       # Logic perhitungan TOPSIS
-├── admin/
-│   ├── perhitungan_ahp.php    # Interface perhitungan AHP
-│   ├── perhitungan_topsis.php # Interface perhitungan TOPSIS
-│   ├── kriteria.php           # Manajemen kriteria
-│   ├── supplier.php           # Manajemen supplier
-│   └── input_nilai.php        # Input nilai supplier
-├── config/
-│   └── database.php           # Konfigurasi database
-└── README.md                  # Dokumentasi ini
+├── 📄 index.php                    # Halaman login utama sistem
+├── 📄 logout.php                   # Script logout dan destroy session
+├── 📄 README.md                    # Dokumentasi lengkap sistem
+│
+├── 📁 admin/                       # Panel administrasi sistem
+│   ├── 📄 dashboard.php            # Dashboard utama dengan ringkasan data
+│   ├── 📄 kriteria.php             # Manajemen kriteria penilaian
+│   ├── 📄 supplier.php             # Manajemen data supplier
+│   ├── 📄 input_nilai.php          # Input nilai supplier per kriteria
+│   ├── 📄 perhitungan_ahp.php      # Interface perhitungan AHP & uji konsistensi
+│   ├── 📄 perhitungan_topsis.php   # Interface perhitungan TOPSIS & ranking
+│   ├── 📄 hasil_seleksi.php        # Tampilan hasil seleksi supplier terbaik
+│   ├── 📄 riwayat.php              # Riwayat hasil seleksi sebelumnya
+│   ├── 📄 profil.php               # Manajemen profil admin
+│   │
+│   └── 📁 includes/                # File template admin
+│       ├── 📄 header.php           # Header dengan navigasi dan meta tags
+│       ├── 📄 sidebar.php          # Sidebar menu navigasi admin
+│       └── 📄 footer.php           # Footer dengan script JavaScript
+│
+├── 📁 assets/                      # Asset frontend (CSS, JS, gambar)
+│   ├── 📁 css/                     # Stylesheet kustom
+│   │   ├── 📄 style.css            # Style utama sistem
+│   │   └── 📄 responsive.css       # Style responsive untuk mobile
+│   │
+│   ├── 📁 js/                      # JavaScript kustom
+│   │   ├── 📄 script.js            # Script utama interaksi UI
+│   │   └── 📄 chart_config.js      # Konfigurasi grafik Chart.js
+│   │
+│   ├── 📁 img/                     # Gambar dan icon sistem
+│   │
+│   └── 📁 lib/                     # Library eksternal
+│       ├── 📁 bootstrap/           # Bootstrap CSS & JS framework
+│       ├── 📁 chartjs/             # Chart.js untuk visualisasi grafik
+│       └── 📁 fontawesome/         # Font Awesome untuk icon
+│
+├── 📁 config/                      # Konfigurasi sistem
+│   └── 📄 database.php             # Konfigurasi koneksi database MySQL
+│
+├── 📁 functions/                   # Logic bisnis dan perhitungan
+│   ├── 📄 ahp_logic.php            # 🧮 Logic perhitungan AHP lengkap
+│   │                               #   - Matriks perbandingan berpasangan
+│   │                               #   - Normalisasi dan bobot prioritas
+│   │                               #   - Lambda Max dan uji konsistensi
+│   │                               #   - Consistency Index (CI) & Ratio (CR)
+│   │
+│   ├── 📄 topsis_logic.php         # 🧮 Logic perhitungan TOPSIS lengkap
+│   │                               #   - Normalisasi matriks keputusan
+│   │                               #   - Matriks terbobot dengan bobot AHP
+│   │                               #   - Solusi ideal positif & negatif
+│   │                               #   - Perhitungan jarak Euclidean
+│   │                               #   - Nilai preferensi dan ranking
+│   │
+│   └── 📄 auth.php                 # Sistem autentikasi dan session management
+│
+└── 📁 includes/                    # File template global
+    ├── 📄 config.php               # Konfigurasi global sistem
+    └── 📄 header.php               # Header untuk halaman publik
+```
 ```
 
 ## 🎓 Referensi
