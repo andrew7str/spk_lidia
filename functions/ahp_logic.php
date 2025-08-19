@@ -83,7 +83,7 @@ function get_existing_comparisons($conn) {
 }
 
 /**
- * Fungsi utama untuk menghitung AHP
+ * Fungsi utama untuk menghitung AHP sesuai dengan contoh di SKRIPSI AHP_TOPSIS.pdf
  * @param mysqli $conn
  * @return array|false Array berisi bobot, CI, CR, atau false jika gagal
  */
@@ -127,16 +127,12 @@ function calculate_ahp($conn) {
             if (isset($db_comparisons[$id1][$id2])) {
                 $comparison_matrix[$i][$j] = $db_comparisons[$id1][$id2];
             } else {
-                // Jika perbandingan belum ada, ini adalah masalah.
-                // Untuk AHP, semua perbandingan harus ada.
-                // Anda bisa mengembalikan error atau mengisi dengan nilai default (misal 1)
-                // Namun, mengisi dengan default bisa membuat hasil tidak akurat.
                 return ['error' => 'Perbandingan antara ' . $kriteria[$i]['nama_kriteria'] . ' dan ' . $kriteria[$j]['nama_kriteria'] . ' belum diisi.'];
             }
         }
     }
 
-    // 2. Normalisasi Matriks
+    // 2. Normalisasi Matriks (sesuai PDF)
     $normalized_matrix = array_fill(0, $n, array_fill(0, $n, 0.0));
     $column_sums = array_fill(0, $n, 0.0);
 
@@ -147,47 +143,57 @@ function calculate_ahp($conn) {
         }
     }
 
-    // Lakukan normalisasi
+    // Lakukan normalisasi: setiap elemen dibagi dengan jumlah kolomnya
     for ($i = 0; $i < $n; $i++) {
         for ($j = 0; $j < $n; $j++) {
             if ($column_sums[$j] != 0) {
                 $normalized_matrix[$i][$j] = $comparison_matrix[$i][$j] / $column_sums[$j];
             } else {
-                $normalized_matrix[$i][$j] = 0; // Hindari pembagian dengan nol
+                $normalized_matrix[$i][$j] = 0;
             }
         }
     }
 
-    // 3. Hitung Bobot Prioritas (Eigenvector)
+    // 3. Hitung Bobot Prioritas (rata-rata baris dari matriks ternormalisasi)
     $weights = [];
     for ($i = 0; $i < $n; $i++) {
-        $row_sum = array_sum($normalized_matrix[$i]);
+        $row_sum = 0;
+        for ($j = 0; $j < $n; $j++) {
+            $row_sum += $normalized_matrix[$i][$j];
+        }
         $weights[$i] = $row_sum / $n;
     }
 
-    // 4. Hitung Lambda Max (λmax)
-    $lambda_max_sum = 0;
+    // 4. Hitung Lambda Max (λmax) - sesuai formula di PDF
+    // Aw = A × w (matriks perbandingan × vektor bobot)
+    $aw_vector = [];
     for ($i = 0; $i < $n; $i++) {
-        $weighted_sum = 0;
+        $aw_sum = 0;
         for ($j = 0; $j < $n; $j++) {
-            $weighted_sum += $comparison_matrix[$i][$j] * $weights[$j];
+            $aw_sum += $comparison_matrix[$i][$j] * $weights[$j];
         }
-        // Hindari pembagian dengan nol jika bobot sangat kecil
+        $aw_vector[$i] = $aw_sum;
+    }
+
+    // Hitung λi = (Aw)i / wi untuk setiap kriteria
+    $lambda_values = [];
+    for ($i = 0; $i < $n; $i++) {
         if ($weights[$i] != 0) {
-            $lambda_max_sum += ($weighted_sum / $weights[$i]);
+            $lambda_values[$i] = $aw_vector[$i] / $weights[$i];
         } else {
-            // Handle case where weight is zero, might indicate an issue with input or calculation
             return ['error' => 'Bobot kriteria nol, tidak dapat menghitung Lambda Max.'];
         }
     }
-    $lambda_max = $lambda_max_sum / $n;
 
-    // 5. Hitung Consistency Index (CI)
+    // λmax = rata-rata dari semua λi
+    $lambda_max = array_sum($lambda_values) / $n;
+
+    // 5. Hitung Consistency Index (CI) = (λmax - n) / (n - 1)
     $ci = ($lambda_max - $n) / ($n - 1);
 
-    // 6. Hitung Consistency Ratio (CR)
-    $ri = $random_index[$n] ?? 0; // Ambil RI berdasarkan jumlah kriteria
-    $cr = ($ri != 0) ? $ci / $ri : 0; // Hindari pembagian dengan nol
+    // 6. Hitung Consistency Ratio (CR) = CI / RI
+    $ri = $random_index[$n] ?? 0;
+    $cr = ($ri != 0) ? $ci / $ri : 0;
 
     // Simpan bobot ke database (tabel kriteria)
     foreach ($kriteria as $index => $k) {
@@ -203,7 +209,10 @@ function calculate_ahp($conn) {
         'kriteria' => $kriteria,
         'comparison_matrix' => $comparison_matrix,
         'normalized_matrix' => $normalized_matrix,
+        'column_sums' => $column_sums,
         'weights' => $weights,
+        'aw_vector' => $aw_vector,
+        'lambda_values' => $lambda_values,
         'lambda_max' => $lambda_max,
         'ci' => $ci,
         'cr' => $cr,

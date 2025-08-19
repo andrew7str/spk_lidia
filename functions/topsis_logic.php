@@ -49,7 +49,7 @@ function get_topsis_data($conn) {
 }
 
 /**
- * Fungsi utama untuk menghitung TOPSIS
+ * Fungsi utama untuk menghitung TOPSIS sesuai dengan contoh di SKRIPSI AHP_TOPSIS.pdf
  * @param mysqli $conn
  * @return array|false Array berisi hasil TOPSIS, atau false jika gagal
  */
@@ -99,7 +99,8 @@ function calculate_topsis($conn) {
 
     // 1. Matriks Keputusan Awal (X) - sudah di $nilai_matrix
 
-    // 2. Normalisasi Matriks Keputusan (R)
+    // 2. Normalisasi Matriks Keputusan (R) - sesuai rumus di PDF
+    // Rij = Xij / sqrt(sum(Xij^2)) untuk setiap kolom j
     $normalized_matrix = array_fill(0, $n_supplier, array_fill(0, $n_kriteria, 0.0));
     $divisor = array_fill(0, $n_kriteria, 0.0); // Pembagi untuk normalisasi
 
@@ -112,7 +113,7 @@ function calculate_topsis($conn) {
         $divisor[$j] = sqrt($sum_sq);
     }
 
-    // Lakukan normalisasi
+    // Lakukan normalisasi: Rij = Xij / sqrt(sum(Xij^2))
     for ($i = 0; $i < $n_supplier; $i++) {
         for ($j = 0; $j < $n_kriteria; $j++) {
             if ($divisor[$j] != 0) {
@@ -123,7 +124,8 @@ function calculate_topsis($conn) {
         }
     }
 
-    // 3. Matriks Normalisasi Terbobot (V)
+    // 3. Matriks Normalisasi Terbobot (V) - sesuai rumus di PDF
+    // Vij = Rij * Wj (matriks ternormalisasi dikali bobot dari AHP)
     $weighted_normalized_matrix = array_fill(0, $n_supplier, array_fill(0, $n_kriteria, 0.0));
     foreach ($supplier as $s_idx => $s) {
         foreach ($kriteria as $k_idx => $k) {
@@ -131,12 +133,15 @@ function calculate_topsis($conn) {
         }
     }
 
-    // 4. Tentukan Solusi Ideal Positif (A+) dan Solusi Ideal Negatif (A-)
+    // 4. Tentukan Solusi Ideal Positif (A+) dan Solusi Ideal Negatif (A-) - sesuai PDF
     $ideal_positive = array_fill(0, $n_kriteria, 0.0); // A+
     $ideal_negative = array_fill(0, $n_kriteria, 0.0); // A-
 
     foreach ($kriteria as $k_idx => $k) {
         $column_values = array_column($weighted_normalized_matrix, $k_idx);
+        
+        // Untuk kriteria benefit: A+ = max, A- = min
+        // Untuk kriteria cost: A+ = min, A- = max
         if ($k['tipe_kriteria'] == 'benefit') {
             $ideal_positive[$k_idx] = max($column_values);
             $ideal_negative[$k_idx] = min($column_values);
@@ -146,7 +151,8 @@ function calculate_topsis($conn) {
         }
     }
 
-    // 5. Hitung Jarak Setiap Alternatif ke Solusi Ideal Positif (D+) dan Negatif (D-)
+    // 5. Hitung Jarak Setiap Alternatif ke Solusi Ideal - sesuai rumus di PDF
+    // D+i = sqrt(sum((Vij - A+j)^2)) dan D-i = sqrt(sum((Vij - A-j)^2))
     $distance_positive = array_fill(0, $n_supplier, 0.0); // D+ [index_supplier]
     $distance_negative = array_fill(0, $n_supplier, 0.0); // D- [index_supplier]
 
@@ -161,17 +167,19 @@ function calculate_topsis($conn) {
         $distance_negative[$i] = sqrt($sum_sq_neg);
     }
 
-    // 6. Hitung Nilai Preferensi (V)
+    // 6. Hitung Nilai Preferensi (V) - sesuai rumus di PDF
+    // Vi = D-i / (D+i + D-i)
     $preferences = array_fill(0, $n_supplier, 0.0); // V [index_supplier]
     for ($i = 0; $i < $n_supplier; $i++) {
-        if (($distance_positive[$i] + $distance_negative[$i]) != 0) {
-            $preferences[$i] = $distance_negative[$i] / ($distance_positive[$i] + $distance_negative[$i]);
+        $total_distance = $distance_positive[$i] + $distance_negative[$i];
+        if ($total_distance != 0) {
+            $preferences[$i] = $distance_negative[$i] / $total_distance;
         } else {
             $preferences[$i] = 0; // Hindari pembagian nol
         }
     }
 
-    // 7. Ranking Alternatif
+    // 7. Ranking Alternatif (urutkan berdasarkan nilai preferensi tertinggi)
     $ranked_supplier = [];
     foreach ($supplier as $s_idx => $s) {
         $ranked_supplier[] = [
@@ -183,7 +191,7 @@ function calculate_topsis($conn) {
         ];
     }
 
-    // Urutkan berdasarkan nilai preferensi (descending)
+    // Urutkan berdasarkan nilai preferensi (descending - tertinggi ke terendah)
     usort($ranked_supplier, function($a, $b) {
         return $b['nilai_preferensi'] <=> $a['nilai_preferensi'];
     });
@@ -199,6 +207,7 @@ function calculate_topsis($conn) {
         'supplier' => $supplier,
         'nilai_matrix_raw' => $nilai_matrix_raw, // Nilai asli dari DB
         'nilai_matrix' => $nilai_matrix, // Matriks nilai yang sudah di-map ke indeks
+        'divisor' => $divisor, // Pembagi normalisasi untuk debugging
         'normalized_matrix' => $normalized_matrix,
         'weighted_normalized_matrix' => $weighted_normalized_matrix,
         'ideal_positive' => $ideal_positive,
