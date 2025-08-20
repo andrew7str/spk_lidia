@@ -49,7 +49,7 @@ function get_topsis_data($conn) {
 }
 
 /**
- * Fungsi utama untuk menghitung TOPSIS sesuai dengan contoh di SKRIPSI AHP_TOPSIS.pdf
+ * Fungsi utama untuk menghitung TOPSIS sesuai dengan perhitungan manual di SKRIPSI AHP_TOPSIS.pdf
  * @param mysqli $conn
  * @return array|false Array berisi hasil TOPSIS, atau false jika gagal
  */
@@ -57,33 +57,18 @@ function calculate_topsis($conn) {
     $data = get_topsis_data($conn);
 
     if (isset($data['error'])) {
-        return $data; // Mengembalikan pesan error dari get_topsis_data
+        return $data;
     }
 
     $kriteria = $data['kriteria'];
     $supplier = $data['supplier'];
-    $nilai_matrix_raw = $data['nilai']; // [id_supplier][id_kriteria] => nilai
+    $nilai_matrix_raw = $data['nilai'];
 
     $n_supplier = count($supplier);
     $n_kriteria = count($kriteria);
 
     if ($n_supplier == 0 || $n_kriteria == 0) {
         return ['error' => 'Tidak ada supplier atau kriteria untuk dihitung.'];
-    }
-
-    // Buat map ID ke index array dan sebaliknya untuk kriteria dan supplier
-    $kriteria_id_to_index = [];
-    $kriteria_index_to_id = [];
-    foreach ($kriteria as $index => $k) {
-        $kriteria_id_to_index[$k['id']] = $index;
-        $kriteria_index_to_id[$index] = $k['id'];
-    }
-
-    $supplier_id_to_index = [];
-    $supplier_index_to_id = [];
-    foreach ($supplier as $index => $s) {
-        $supplier_id_to_index[$s['id']] = $index;
-        $supplier_index_to_id[$index] = $s['id'];
     }
 
     // Pastikan semua supplier memiliki nilai untuk semua kriteria
@@ -97,89 +82,128 @@ function calculate_topsis($conn) {
         }
     }
 
-    // 1. Matriks Keputusan Awal (X) - sudah di $nilai_matrix
+    // 1. Matriks Keputusan Awal (X) - sesuai PDF
+    // Data dari PDF:
+    // Rezeky (A1): [5, 8, 4, 9]
+    // Duta Modren (A2): [6, 7, 5, 7]  
+    // Serasi (A3): [4, 6, 6, 9]
+    // Umi Kids (A4): [5, 7, 5, 6]
+    // Kids (A5): [3, 9, 7, 8]
 
-    // 2. Normalisasi Matriks Keputusan (R) - sesuai rumus di PDF
-    // Rij = Xij / sqrt(sum(Xij^2)) untuk setiap kolom j
+    // 2. Normalisasi Matriks - sesuai rumus di PDF: Rij = Xij / sqrt(sum(Xij^2))
     $normalized_matrix = array_fill(0, $n_supplier, array_fill(0, $n_kriteria, 0.0));
-    $divisor = array_fill(0, $n_kriteria, 0.0); // Pembagi untuk normalisasi
-
-    // Hitung pembagi untuk setiap kriteria (akar dari jumlah kuadrat kolom)
+    
+    // Hitung akar jumlah kuadrat untuk setiap kolom (kriteria) - sesuai PDF
+    $column_sqrt_sum = array_fill(0, $n_kriteria, 0.0);
     for ($j = 0; $j < $n_kriteria; $j++) {
         $sum_sq = 0;
         for ($i = 0; $i < $n_supplier; $i++) {
             $sum_sq += pow($nilai_matrix[$i][$j], 2);
         }
-        $divisor[$j] = sqrt($sum_sq);
+        $column_sqrt_sum[$j] = sqrt($sum_sq);
     }
+
+    // Dari PDF, nilai yang diharapkan:
+    // Harga (C1): 10.535654
+    // Kualitas (C2): 16.703293  
+    // Waktu (C3): 12.288206
+    // Pelayanan (C4): 17.635192
 
     // Lakukan normalisasi: Rij = Xij / sqrt(sum(Xij^2))
     for ($i = 0; $i < $n_supplier; $i++) {
         for ($j = 0; $j < $n_kriteria; $j++) {
-            if ($divisor[$j] != 0) {
-                $normalized_matrix[$i][$j] = $nilai_matrix[$i][$j] / $divisor[$j];
+            if ($column_sqrt_sum[$j] != 0) {
+                $normalized_matrix[$i][$j] = $nilai_matrix[$i][$j] / $column_sqrt_sum[$j];
             } else {
-                $normalized_matrix[$i][$j] = 0; // Hindari pembagian nol
+                $normalized_matrix[$i][$j] = 0;
             }
         }
     }
 
-    // 3. Matriks Normalisasi Terbobot (V) - sesuai rumus di PDF
-    // Vij = Rij * Wj (matriks ternormalisasi dikali bobot dari AHP)
+    // 3. Matriks Normalisasi Terbobot (V) - Vij = Rij * Wj
     $weighted_normalized_matrix = array_fill(0, $n_supplier, array_fill(0, $n_kriteria, 0.0));
-    foreach ($supplier as $s_idx => $s) {
-        foreach ($kriteria as $k_idx => $k) {
-            $weighted_normalized_matrix[$s_idx][$k_idx] = $normalized_matrix[$s_idx][$k_idx] * $k['bobot'];
+    for ($i = 0; $i < $n_supplier; $i++) {
+        for ($j = 0; $j < $n_kriteria; $j++) {
+            $weighted_normalized_matrix[$i][$j] = $normalized_matrix[$i][$j] * $kriteria[$j]['bobot'];
         }
     }
 
-    // 4. Tentukan Solusi Ideal Positif (A+) dan Solusi Ideal Negatif (A-) - sesuai PDF
+    // 4. Tentukan Solusi Ideal Positif (A+) dan Solusi Ideal Negatif (A-)
     $ideal_positive = array_fill(0, $n_kriteria, 0.0); // A+
     $ideal_negative = array_fill(0, $n_kriteria, 0.0); // A-
 
-    foreach ($kriteria as $k_idx => $k) {
-        $column_values = array_column($weighted_normalized_matrix, $k_idx);
+    for ($j = 0; $j < $n_kriteria; $j++) {
+        $column_values = array_column($weighted_normalized_matrix, $j);
         
-        // Untuk kriteria benefit: A+ = max, A- = min
-        // Untuk kriteria cost: A+ = min, A- = max
-        if ($k['tipe_kriteria'] == 'benefit') {
-            $ideal_positive[$k_idx] = max($column_values);
-            $ideal_negative[$k_idx] = min($column_values);
+        if ($kriteria[$j]['tipe_kriteria'] == 'benefit') {
+            // Untuk kriteria benefit: A+ = max, A- = min
+            $ideal_positive[$j] = max($column_values);
+            $ideal_negative[$j] = min($column_values);
         } else { // 'cost'
-            $ideal_positive[$k_idx] = min($column_values);
-            $ideal_negative[$k_idx] = max($column_values);
+            // Untuk kriteria cost: A+ = min, A- = max
+            $ideal_positive[$j] = min($column_values);
+            $ideal_negative[$j] = max($column_values);
         }
     }
 
-    // 5. Hitung Jarak Setiap Alternatif ke Solusi Ideal - sesuai rumus di PDF
-    // D+i = sqrt(sum((Vij - A+j)^2)) dan D-i = sqrt(sum((Vij - A-j)^2))
-    $distance_positive = array_fill(0, $n_supplier, 0.0); // D+ [index_supplier]
-    $distance_negative = array_fill(0, $n_supplier, 0.0); // D- [index_supplier]
+    // Dari PDF, solusi ideal yang diharapkan:
+    // Solusi Ideal Positif (A+):
+    // - Harga (C1): 0.034711 (Kids)
+    // - Kualitas (C2): 0.300605 (Kids)
+    // - Waktu (C3): 0.085708 (Rezeky)
+    // - Pelayanan (C4): 0.029039 (Rezeky & Serasi)
+    
+    // Solusi Ideal Negatif (A-):
+    // - Harga (C1): 0.069421 (Duta Modern)
+    // - Kualitas (C2): 0.200404 (Serasi)
+    // - Waktu (C3): 0.149989 (Kids)
+    // - Pelayanan (C4): 0.019359 (Umi Kids)
+
+    // 5. Hitung Jarak Setiap Alternatif ke Solusi Ideal - Euclidean Distance
+    $distance_positive = array_fill(0, $n_supplier, 0.0); // D+
+    $distance_negative = array_fill(0, $n_supplier, 0.0); // D-
 
     for ($i = 0; $i < $n_supplier; $i++) {
         $sum_sq_pos = 0;
         $sum_sq_neg = 0;
+        
         for ($j = 0; $j < $n_kriteria; $j++) {
+            // D+ = sqrt(sum((Vij - A+j)^2))
             $sum_sq_pos += pow(($weighted_normalized_matrix[$i][$j] - $ideal_positive[$j]), 2);
+            // D- = sqrt(sum((Vij - A-j)^2))
             $sum_sq_neg += pow(($weighted_normalized_matrix[$i][$j] - $ideal_negative[$j]), 2);
         }
+        
         $distance_positive[$i] = sqrt($sum_sq_pos);
         $distance_negative[$i] = sqrt($sum_sq_neg);
     }
 
-    // 6. Hitung Nilai Preferensi (V) - sesuai rumus di PDF
-    // Vi = D-i / (D+i + D-i)
-    $preferences = array_fill(0, $n_supplier, 0.0); // V [index_supplier]
+    // Dari PDF, hasil yang diharapkan:
+    // Rezeky (A1): D+ = 0.040634, D- = 0.093926
+    // Duta Modern (A2): D+ = 0.078537, D- = 0.054429
+    // Serasi (A3): D+ = 0.109594, D- = 0.032989
+    // Umi Kids (A4): D+ = 0.074503, D- = 0.055551
+    // Kids (A5): D+ = 0.064362, D- = 0.106240
+
+    // 6. Hitung Nilai Preferensi (V) - Vi = D- / (D+ + D-)
+    $preferences = array_fill(0, $n_supplier, 0.0);
     for ($i = 0; $i < $n_supplier; $i++) {
         $total_distance = $distance_positive[$i] + $distance_negative[$i];
         if ($total_distance != 0) {
             $preferences[$i] = $distance_negative[$i] / $total_distance;
         } else {
-            $preferences[$i] = 0; // Hindari pembagian nol
+            $preferences[$i] = 0;
         }
     }
 
-    // 7. Ranking Alternatif (urutkan berdasarkan nilai preferensi tertinggi)
+    // Dari PDF, hasil preferensi yang diharapkan:
+    // Rezeky (A1): 0.698025 (Ranking 1)
+    // Kids (A5): 0.622735 (Ranking 2)
+    // Umi Kids (A4): 0.427139 (Ranking 3)
+    // Duta Modern (A2): 0.409345 (Ranking 4)
+    // Serasi (A3): 0.231369 (Ranking 5)
+
+    // 7. Ranking Alternatif berdasarkan nilai preferensi (descending)
     $ranked_supplier = [];
     foreach ($supplier as $s_idx => $s) {
         $ranked_supplier[] = [
@@ -191,7 +215,7 @@ function calculate_topsis($conn) {
         ];
     }
 
-    // Urutkan berdasarkan nilai preferensi (descending - tertinggi ke terendah)
+    // Urutkan berdasarkan nilai preferensi (descending)
     usort($ranked_supplier, function($a, $b) {
         return $b['nilai_preferensi'] <=> $a['nilai_preferensi'];
     });
@@ -205,9 +229,9 @@ function calculate_topsis($conn) {
     return [
         'kriteria' => $kriteria,
         'supplier' => $supplier,
-        'nilai_matrix_raw' => $nilai_matrix_raw, // Nilai asli dari DB
-        'nilai_matrix' => $nilai_matrix, // Matriks nilai yang sudah di-map ke indeks
-        'divisor' => $divisor, // Pembagi normalisasi untuk debugging
+        'nilai_matrix_raw' => $nilai_matrix_raw,
+        'nilai_matrix' => $nilai_matrix,
+        'column_sqrt_sum' => $column_sqrt_sum, // Untuk debugging dan verifikasi
         'normalized_matrix' => $normalized_matrix,
         'weighted_normalized_matrix' => $weighted_normalized_matrix,
         'ideal_positive' => $ideal_positive,
@@ -220,7 +244,7 @@ function calculate_topsis($conn) {
 }
 
 /**
- * Fungsi untuk menyimpan hasil TOPSIS ke database
+ * Fungsi untuk menyimpan hasil TOPSIS ke database dengan D+ dan D-
  * @param mysqli $conn
  * @param array $ranked_supplier
  * @return bool
@@ -231,15 +255,26 @@ function save_topsis_results($conn, $ranked_supplier) {
         $tanggal_seleksi = date('Y-m-d');
 
         // Hapus hasil seleksi sebelumnya untuk tanggal yang sama
-        // Ini penting agar riwayat tidak duplikat untuk tanggal yang sama
         $stmt_delete = $conn->prepare("DELETE FROM hasil_seleksi WHERE tanggal_seleksi = ?");
         $stmt_delete->bind_param("s", $tanggal_seleksi);
         $stmt_delete->execute();
         $stmt_delete->close();
 
+        // Periksa apakah kolom d_plus dan d_minus ada di tabel
+        $check_columns = $conn->query("SHOW COLUMNS FROM hasil_seleksi LIKE 'd_plus'");
+        $has_d_columns = $check_columns->num_rows > 0;
+
+        if (!$has_d_columns) {
+            // Tambahkan kolom d_plus dan d_minus jika belum ada
+            $conn->query("ALTER TABLE hasil_seleksi ADD COLUMN d_plus DECIMAL(10,6) DEFAULT NULL");
+            $conn->query("ALTER TABLE hasil_seleksi ADD COLUMN d_minus DECIMAL(10,6) DEFAULT NULL");
+        }
+
         foreach ($ranked_supplier as $s) {
-            $stmt = $conn->prepare("INSERT INTO hasil_seleksi (id_supplier, nilai_preferensi, ranking, tanggal_seleksi) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("idis", $s['id'], $s['nilai_preferensi'], $s['ranking'], $tanggal_seleksi);
+            $stmt = $conn->prepare("INSERT INTO hasil_seleksi (id_supplier, nilai_preferensi, ranking, tanggal_seleksi, d_plus, d_minus) VALUES (?, ?, ?, ?, ?, ?)");
+            $d_plus = $s['D_plus'] ?? $s['d_plus'] ?? 0;
+            $d_minus = $s['D_minus'] ?? $s['d_minus'] ?? 0;
+            $stmt->bind_param("idisdd", $s['id'], $s['nilai_preferensi'], $s['ranking'], $tanggal_seleksi, $d_plus, $d_minus);
             $stmt->execute();
             $stmt->close();
         }

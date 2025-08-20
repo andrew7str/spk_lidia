@@ -133,20 +133,45 @@ $existing_comparisons = get_existing_comparisons($conn);
                                             <div class="text-center font-weight-bold">1</div>
                                             <input type="hidden" name="perbandingan[<?php echo $k1['id']; ?>][<?php echo $k2['id']; ?>]" value="1">
                                         <?php else: ?>
-                                            <select name="perbandingan[<?php echo $k1['id']; ?>][<?php echo $k2['id']; ?>]" 
-                                                    class="form-control form-control-sm" required>
-                                                <option value="">Pilih</option>
-                                                <?php foreach ($saaty_scale as $value => $desc): ?>
-                                                    <option value="<?php echo $value; ?>"
-                                                        <?php
-                                                        if (isset($existing_comparisons[$k1['id']][$k2['id']]) && 
-                                                            abs($existing_comparisons[$k1['id']][$k2['id']] - $value) < 0.01) {
-                                                            echo 'selected';
-                                                        }
-                                                        ?>
-                                                    ><?php echo $value; ?> - <?php echo $desc; ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
+                                            <?php
+                                            // Nilai default sesuai PDF untuk mempermudah input
+                                            $default_values = [
+                                                '1_2' => 0.2,      // Harga vs Kualitas = 1/5
+                                                '1_3' => 0.333333, // Harga vs Waktu = 1/3  
+                                                '1_4' => 3,        // Harga vs Pelayanan = 3
+                                                '2_3' => 3,        // Kualitas vs Waktu = 3
+                                                '2_4' => 7,        // Kualitas vs Pelayanan = 7
+                                                '3_4' => 5,        // Waktu vs Pelayanan = 5
+                                            ];
+                                            
+                                            $key = $k1['id'] . '_' . $k2['id'];
+                                            $current_value = '';
+                                            
+                                            if (isset($existing_comparisons[$k1['id']][$k2['id']])) {
+                                                $current_value = $existing_comparisons[$k1['id']][$k2['id']];
+                                            } elseif (isset($default_values[$key])) {
+                                                $current_value = $default_values[$key];
+                                            }
+                                            ?>
+                                            <input type="number" 
+                                                   name="perbandingan[<?php echo $k1['id']; ?>][<?php echo $k2['id']; ?>]" 
+                                                   class="form-control form-control-sm" 
+                                                   step="0.000001" 
+                                                   min="0.111111" 
+                                                   max="9" 
+                                                   value="<?php echo $current_value; ?>" 
+                                                   placeholder="1-9 atau 1/x"
+                                                   required>
+                                            <small class="text-muted">
+                                                <?php 
+                                                if ($k1['nama_kriteria'] == 'Harga' && $k2['nama_kriteria'] == 'Kualitas') echo '1/5 = 0.2';
+                                                elseif ($k1['nama_kriteria'] == 'Harga' && $k2['nama_kriteria'] == 'Waktu') echo '1/3 = 0.333333';
+                                                elseif ($k1['nama_kriteria'] == 'Harga' && $k2['nama_kriteria'] == 'Pelayanan') echo '3';
+                                                elseif ($k1['nama_kriteria'] == 'Kualitas' && $k2['nama_kriteria'] == 'Waktu') echo '3';
+                                                elseif ($k1['nama_kriteria'] == 'Kualitas' && $k2['nama_kriteria'] == 'Pelayanan') echo '7';
+                                                elseif ($k1['nama_kriteria'] == 'Waktu' && $k2['nama_kriteria'] == 'Pelayanan') echo '5';
+                                                ?>
+                                            </small>
                                         <?php endif; ?>
                                     </td>
                                 <?php endforeach; ?>
@@ -322,4 +347,63 @@ $existing_comparisons = get_existing_comparisons($conn);
 
 .consistency-info .info-box span {
     font-size: 18px;
-    font
+    font-weight: bold;
+}
+
+.text-muted {
+    font-size: 11px;
+    color: #6c757d !important;
+}
+
+.form-control-sm {
+    height: calc(1.5em + 0.5rem + 2px);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+</style>
+
+<script>
+// Fungsi untuk mengisi nilai default sesuai PDF
+function fillDefaultValues() {
+    // Nilai default sesuai PDF
+    const defaultValues = {
+        '1_2': 0.2,      // Harga vs Kualitas = 1/5
+        '1_3': 0.333333, // Harga vs Waktu = 1/3  
+        '1_4': 3,        // Harga vs Pelayanan = 3
+        '2_3': 3,        // Kualitas vs Waktu = 3
+        '2_4': 7,        // Kualitas vs Pelayanan = 7
+        '3_4': 5,        // Waktu vs Pelayanan = 5
+    };
+    
+    // Isi nilai ke input fields
+    Object.keys(defaultValues).forEach(key => {
+        const input = document.querySelector(`input[name="perbandingan[${key.split('_')[0]}][${key.split('_')[1]}]"]`);
+        if (input) {
+            input.value = defaultValues[key];
+        }
+    });
+    
+    alert('Nilai default sesuai PDF telah diisi!');
+}
+
+// Tambahkan tombol untuk mengisi nilai default
+document.addEventListener('DOMContentLoaded', function() {
+    const formActions = document.querySelector('.form-actions');
+    if (formActions) {
+        const defaultButton = document.createElement('button');
+        defaultButton.type = 'button';
+        defaultButton.className = 'btn btn-info';
+        defaultButton.innerHTML = '<i class="fas fa-magic"></i> Isi Nilai Default PDF';
+        defaultButton.onclick = fillDefaultValues;
+        
+        formActions.insertBefore(defaultButton, formActions.firstChild);
+    }
+});
+</script>
+
+<?php
+require_once 'includes/footer.php';
+$conn->close();
+?>

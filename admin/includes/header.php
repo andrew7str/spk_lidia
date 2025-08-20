@@ -21,19 +21,22 @@ $current_username = $_SESSION['username'] ?? 'Admin';
     <div class="wrapper">
         <div class="sidebar">
             <div class="sidebar-header">
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <h3>SPK Lidia Fashion</h3>
             </div>
             <ul class="sidebar-menu">
-                <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="kriteria.php"><i class="fas fa-list-alt"></i> Kriteria</a></li>
-                <li><a href="supplier.php"><i class="fas fa-truck"></i> Supplier</a></li>
-                <li><a href="input_nilai.php"><i class="fas fa-edit"></i> Input Nilai</a></li>
-                <li><a href="perhitungan_ahp.php"><i class="fas fa-calculator"></i> Perhitungan AHP</a></li>
-                <li><a href="perhitungan_topsis.php"><i class="fas fa-chart-bar"></i> Perhitungan TOPSIS</a></li>
-                <li><a href="hasil_seleksi.php"><i class="fas fa-trophy"></i> Hasil Seleksi</a></li>
-                <li><a href="riwayat.php"><i class="fas fa-history"></i> Riwayat</a></li>
-                <li><a href="profil.php"><i class="fas fa-user-circle"></i> Profil</a></li>
-                <li><a href="../logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                <li><a href="dashboard.php" data-tooltip="Dashboard"><i class="fas fa-tachometer-alt"></i><span class="menu-text">Dashboard</span></a></li>
+                <li><a href="kriteria.php" data-tooltip="Kriteria"><i class="fas fa-list-alt"></i><span class="menu-text">Kriteria</span></a></li>
+                <li><a href="supplier.php" data-tooltip="Supplier"><i class="fas fa-truck"></i><span class="menu-text">Supplier</span></a></li>
+                <li><a href="input_nilai.php" data-tooltip="Input Nilai"><i class="fas fa-edit"></i><span class="menu-text">Input Nilai</span></a></li>
+                <li><a href="perhitungan_ahp.php" data-tooltip="Perhitungan AHP"><i class="fas fa-calculator"></i><span class="menu-text">Perhitungan AHP</span></a></li>
+                <li><a href="perhitungan_topsis.php" data-tooltip="Perhitungan TOPSIS"><i class="fas fa-chart-bar"></i><span class="menu-text">Perhitungan TOPSIS</span></a></li>
+                <li><a href="hasil_seleksi.php" data-tooltip="Hasil Seleksi"><i class="fas fa-trophy"></i><span class="menu-text">Hasil Seleksi</span></a></li>
+                <li><a href="riwayat.php" data-tooltip="Riwayat"><i class="fas fa-history"></i><span class="menu-text">Riwayat</span></a></li>
+                <li><a href="profil.php" data-tooltip="Profil"><i class="fas fa-user-circle"></i><span class="menu-text">Profil</span></a></li>
+                <li><a href="../logout.php" data-tooltip="Logout"><i class="fas fa-sign-out-alt"></i><span class="menu-text">Logout</span></a></li>
             </ul>
         </div>
         <div class="main-content">

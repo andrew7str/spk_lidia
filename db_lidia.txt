@@ -1,58 +1,125 @@
- CREATE TABLE users (
-     id INT AUTO_INCREMENT PRIMARY KEY,
-     username VARCHAR(50) NOT NULL UNIQUE,
-     password VARCHAR(255) NOT NULL,
-     role VARCHAR(20) DEFAULT 'admin',
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Database Setup untuk SPK Lidia Fashion
+-- Data sesuai dengan gambar hasil perhitungan yang diberikan
 
- CREATE TABLE kriteria (
-     id INT AUTO_INCREMENT PRIMARY KEY,
-     nama_kriteria VARCHAR(100) NOT NULL UNIQUE,
-     tipe_kriteria ENUM('benefit', 'cost') NOT NULL,
-     bobot DECIMAL(5,4) DEFAULT 0.0000,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Buat database
+CREATE DATABASE IF NOT EXISTS spk_lidia_fashion;
+USE spk_lidia_fashion;
 
- CREATE TABLE supplier (
-     id INT AUTO_INCREMENT PRIMARY KEY,
-     nama_supplier VARCHAR(100) NOT NULL UNIQUE,
-     deskripsi TEXT,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Hapus data lama jika ada
+DROP TABLE IF EXISTS hasil_seleksi;
+DROP TABLE IF EXISTS nilai_supplier;
+DROP TABLE IF EXISTS perbandingan_ahp;
+DROP TABLE IF EXISTS supplier;
+DROP TABLE IF EXISTS kriteria;
+DROP TABLE IF EXISTS users;
 
- CREATE TABLE nilai_supplier (
-     id INT AUTO_INCREMENT PRIMARY KEY,
-     id_supplier INT NOT NULL,
-     id_kriteria INT NOT NULL,
-     nilai DECIMAL(5,2) NOT NULL,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-     FOREIGN KEY (id_supplier) REFERENCES supplier(id) ON DELETE CASCADE,
-     FOREIGN KEY (id_kriteria) REFERENCES kriteria(id) ON DELETE CASCADE,
-     UNIQUE (id_supplier, id_kriteria)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Tabel users untuk login
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) DEFAULT 'admin',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
- CREATE TABLE perbandingan_ahp (
-     id INT AUTO_INCREMENT PRIMARY KEY,
-     kriteria1_id INT NOT NULL,
-     kriteria2_id INT NOT NULL,
-     nilai_perbandingan DECIMAL(5,2) NOT NULL,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-     FOREIGN KEY (kriteria1_id) REFERENCES kriteria(id) ON DELETE CASCADE,
-     FOREIGN KEY (kriteria2_id) REFERENCES kriteria(id) ON DELETE CASCADE,
-     UNIQUE (kriteria1_id, kriteria2_id)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Insert user admin
+INSERT INTO users (username, password, role) VALUES 
+('admin', 'admin', 'admin');
 
- CREATE TABLE hasil_seleksi (
-     id INT AUTO_INCREMENT PRIMARY KEY,
-     id_supplier INT NOT NULL,
-     nilai_preferensi DECIMAL(10,8) NOT NULL,
-     ranking INT NOT NULL,
-     tanggal_seleksi DATE NOT NULL,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-     FOREIGN KEY (id_supplier) REFERENCES supplier(id) ON DELETE CASCADE
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Tabel kriteria
+CREATE TABLE IF NOT EXISTS kriteria (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nama_kriteria VARCHAR(100) NOT NULL,
+    tipe_kriteria ENUM('benefit', 'cost') NOT NULL,
+    bobot DECIMAL(10,6) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
- INSERT INTO users (username, password, role) VALUES ('admin', 'password_admin', 'admin');
- SELECT 'Database setup berhasil!' AS message;
- ) > "%temp_sql%"
+-- Insert kriteria sesuai PDF
+INSERT INTO kriteria (id, nama_kriteria, tipe_kriteria) VALUES 
+(1, 'Harga', 'cost'),
+(2, 'Kualitas', 'benefit'),
+(3, 'Waktu', 'cost'),
+(4, 'Pelayanan', 'benefit');
+
+-- Tabel supplier
+CREATE TABLE IF NOT EXISTS supplier (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nama_supplier VARCHAR(100) NOT NULL,
+    alamat TEXT,
+    telepon VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert supplier sesuai gambar
+INSERT INTO supplier (id, nama_supplier) VALUES 
+(1, 'Supplier toko baju Rezeky'),
+(2, 'Supplier toko baju Duta Modren'),
+(3, 'Supplier toko baju Serasi'),
+(4, 'Supplier toko baju Umi Kids'),
+(5, 'Supplier toko baju Kids');
+
+-- Tabel perbandingan AHP
+CREATE TABLE IF NOT EXISTS perbandingan_ahp (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    kriteria1_id INT NOT NULL,
+    kriteria2_id INT NOT NULL,
+    nilai_perbandingan DECIMAL(10,6) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (kriteria1_id) REFERENCES kriteria(id),
+    FOREIGN KEY (kriteria2_id) REFERENCES kriteria(id)
+);
+
+-- Insert perbandingan AHP sesuai PDF
+INSERT INTO perbandingan_ahp (kriteria1_id, kriteria2_id, nilai_perbandingan) VALUES 
+-- Diagonal (sama dengan diri sendiri)
+(1, 1, 1), (2, 2, 1), (3, 3, 1), (4, 4, 1),
+-- Harga (C1) vs lainnya
+(1, 2, 0.2), (1, 3, 0.333333), (1, 4, 3),
+-- Kualitas (C2) vs lainnya
+(2, 1, 5), (2, 3, 3), (2, 4, 7),
+-- Waktu (C3) vs lainnya
+(3, 1, 3), (3, 2, 0.333333), (3, 4, 5),
+-- Pelayanan (C4) vs lainnya
+(4, 1, 0.333333), (4, 2, 0.142857), (4, 3, 0.2);
+
+-- Tabel nilai supplier
+CREATE TABLE IF NOT EXISTS nilai_supplier (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_supplier INT NOT NULL,
+    id_kriteria INT NOT NULL,
+    nilai DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_supplier) REFERENCES supplier(id),
+    FOREIGN KEY (id_kriteria) REFERENCES kriteria(id)
+);
+
+-- Insert nilai supplier sesuai PDF
+INSERT INTO nilai_supplier (id_supplier, id_kriteria, nilai) VALUES 
+-- Rezeky (A1)
+(1, 1, 5), (1, 2, 8), (1, 3, 4), (1, 4, 9),
+-- Duta Modren (A2)
+(2, 1, 6), (2, 2, 7), (2, 3, 5), (2, 4, 7),
+-- Serasi (A3)
+(3, 1, 4), (3, 2, 6), (3, 3, 6), (3, 4, 9),
+-- Umi Kids (A4)
+(4, 1, 5), (4, 2, 7), (4, 3, 5), (4, 4, 6),
+-- Kids (A5)
+(5, 1, 3), (5, 2, 9), (5, 3, 7), (5, 4, 8);
+
+-- Tabel hasil seleksi
+CREATE TABLE IF NOT EXISTS hasil_seleksi (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_supplier INT NOT NULL,
+    nilai_preferensi DECIMAL(10,6) NOT NULL,
+    ranking INT NOT NULL,
+    tanggal_seleksi DATE NOT NULL,
+    d_plus DECIMAL(10,6) DEFAULT NULL,
+    d_minus DECIMAL(10,6) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_supplier) REFERENCES supplier(id)
+);
+
+-- Bobot kriteria akan dihitung otomatis oleh sistem AHP
+-- Hasil TOPSIS akan dihitung otomatis oleh sistem TOPSIS
+-- Tidak ada data manual yang diisi, semua dihitung secara real-time

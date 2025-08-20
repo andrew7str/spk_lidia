@@ -139,51 +139,188 @@ a:hover {
 }
 
 .sidebar {
-    width: 250px;
+    width: 60px; /* Collapsed width - hanya menampilkan icon */
     background-color: var(--sidebar-bg);
     color: var(--sidebar-text);
-    padding: 20px;
+    padding: 20px 5px;
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    flex-shrink: 0; /* Prevent sidebar from shrinking */
+    flex-shrink: 0;
+    transition: width 0.3s ease, padding 0.3s ease;
+    overflow: visible; /* Ubah ke visible agar tooltip bisa muncul */
+    position: relative;
+}
+
+.sidebar:hover,
+.sidebar.expanded {
+    width: 250px; /* Expanded width saat hover atau diklik */
+    padding: 20px;
 }
 
 .sidebar-header {
-    text-align: center;
+    text-align: left;
     margin-bottom: 30px;
     padding-bottom: 15px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
+    white-space: nowrap;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    position: relative;
 }
 
 .sidebar-header h3 {
     color: #fff;
-    font-size: 24px;
+    font-size: 18px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    margin: 0;
+    margin-left: 10px;
+}
+
+.sidebar:hover .sidebar-header h3,
+.sidebar.expanded .sidebar-header h3 {
+    opacity: 1;
 }
 
 .sidebar-menu {
     list-style: none;
     padding: 0;
+    margin: 0;
 }
 
 .sidebar-menu li {
-    margin-bottom: 10px;
+    margin-bottom: 5px;
+    position: relative;
 }
 
 .sidebar-menu a {
     color: var(--sidebar-text);
-    padding: 10px 15px;
-    display: block;
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
+    padding: 12px 10px;
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
 }
 
 .sidebar-menu a:hover,
 .sidebar-menu a.active {
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgba(255,255,255,0.15);
     text-decoration: none;
+    transform: translateX(2px);
 }
 
 .sidebar-menu a i {
-    margin-right: 10px;
+    min-width: 24px;
+    text-align: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.sidebar-menu a .menu-text {
+    margin-left: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.sidebar:hover .sidebar-menu a .menu-text,
+.sidebar.expanded .sidebar-menu a .menu-text {
+    opacity: 1;
+}
+
+/* Tooltip untuk collapsed state */
+.sidebar-menu a::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 65px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0,0,0,0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Arrow untuk tooltip */
+.sidebar-menu a::after {
+    content: '';
+    position: absolute;
+    left: 57px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-right: 8px solid rgba(0,0,0,0.9);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Show tooltip hanya saat sidebar collapsed dan menu di-hover */
+.sidebar:not(:hover):not(.expanded) .sidebar-menu a:hover::before,
+.sidebar:not(:hover):not(.expanded) .sidebar-menu a:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Hide tooltip when sidebar is expanded */
+.sidebar:hover .sidebar-menu a::before,
+.sidebar:hover .sidebar-menu a::after,
+.sidebar.expanded .sidebar-menu a::before,
+.sidebar.expanded .sidebar-menu a::after {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Toggle button di dalam sidebar header */
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: var(--sidebar-text);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+}
+
+.sidebar-toggle:hover {
+    background-color: rgba(255,255,255,0.1);
+    color: var(--primary-color);
+}
+
+.sidebar-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+/* Hide toggle button saat sidebar expanded */
+.sidebar:hover .sidebar-toggle,
+.sidebar.expanded .sidebar-toggle {
+    opacity: 0.7;
 }
 
 .main-content {
@@ -338,17 +475,27 @@ table tr:hover {
 }
 
 /* Responsive adjustments */
-/* assets/css/responsive.css (akan dibuat terpisah, tapi bisa juga digabung) */
 @media (max-width: 768px) {
     .wrapper {
         flex-direction: column;
     }
 
     .sidebar {
-        width: 100%;
+        width: 100% !important;
         height: auto;
-        padding: 15px;
+        padding: 15px !important;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: none;
+    }
+
+    .sidebar:hover {
+        width: 100% !important;
+        padding: 15px !important;
+    }
+
+    .sidebar-header h3 {
+        opacity: 1 !important;
+        font-size: 20px;
     }
 
     .sidebar-menu {
@@ -364,6 +511,24 @@ table tr:hover {
     .sidebar-menu a {
         padding: 8px 12px;
         font-size: 14px;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .sidebar-menu a .menu-text {
+        opacity: 1 !important;
+        margin-left: 0;
+        margin-top: 5px;
+        font-size: 12px;
+    }
+
+    .sidebar-menu a i {
+        margin-bottom: 5px;
+    }
+
+    /* Hide tooltips on mobile */
+    .sidebar-menu a::after {
+        display: none !important;
     }
 
     .navbar {

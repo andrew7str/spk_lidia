@@ -1,17 +1,3 @@
-# Cara Penggunaan Pertama - Setup Database
-## 🚀 Langkah Penggunaan
-1. **Aktifkan MySQL**
-   - Jalankan **XAMPP Control Panel** → klik **Start** pada MySQL.
-   - Atau pastikan MySQL service aktif di komputer Anda.
-2. - Jalankan "SettingsDatabase.cmd" untuk mengatur database secara otomatis.
-   - Pilih lokasi file settingan database nya yaitu "db_lidia.txt"
-   - Cek pada "http://localhost/phpmyadmin/index.php" apakah database "spk_lidia_fashion" sudah ada dan konfigurasi lainnya.
-3. - Langsung coba dengan membuka "http://localhost/spk_lidia_fashion/index.php" pada Web Browser
-   - Untuk login default :
-     - admin
-     - password_admin
-   - 
-
 # 🏪 SPK Lidia Fashion - Sistem Pendukung Keputusan Seleksi Supplier
 
 Sistem Pendukung Keputusan berbasis web untuk membantu Toko Lidia Fashion dalam memilih supplier terbaik menggunakan metode **AHP (Analytical Hierarchy Process)** dan **TOPSIS (Technique for Order Preference by Similarity to Ideal Solution)**.
@@ -28,6 +14,7 @@ Sistem ini dirancang untuk mengatasi permasalahan pemilihan supplier yang selama
 - **Hasil Seleksi**: Menampilkan ranking supplier dengan nilai preferensi
 - **Riwayat Seleksi**: Menyimpan dan menampilkan riwayat hasil seleksi
 - **Visualisasi Data**: Grafik hasil seleksi untuk analisis yang lebih mudah
+- **Sidebar Responsif**: Sidebar kiri yang dapat collapse/expand dengan hover effect dan tooltip
 
 ### 🔧 Teknologi yang Digunakan
 - **Backend**: PHP 7.4+
@@ -104,12 +91,14 @@ Sistem ini telah divalidasi menggunakan contoh perhitungan manual dari skripsi d
 - **Supplier**: Rezeky, Duta Modren, Serasi, Umi Kids, Kids
 - **Target Hasil**: Supplier Rezeky sebagai ranking 1 dengan nilai preferensi ~0.698
 
-## 📁 Struktur File Penting
+## 📁 Struktur File Lengkap
 
 ```
+spk_lidia_fashion/
 ├── 📄 index.php                    # Halaman login utama sistem
 ├── 📄 logout.php                   # Script logout dan destroy session
 ├── 📄 README.md                    # Dokumentasi lengkap sistem
+├── 📄 SKRIPSI AHP_TOPSIS.pdf       # Referensi skripsi dan perhitungan manual
 │
 ├── 📁 admin/                       # Panel administrasi sistem
 │   ├── 📄 dashboard.php            # Dashboard utama dengan ringkasan data
@@ -166,6 +155,39 @@ Sistem ini telah divalidasi menggunakan contoh perhitungan manual dari skripsi d
     ├── 📄 config.php               # Konfigurasi global sistem
     └── 📄 header.php               # Header untuk halaman publik
 ```
+
+### 🔍 Penjelasan Detail File Utama
+
+#### **Core Logic Files**
+- **`functions/ahp_logic.php`**: Implementasi lengkap metode AHP dengan formula sesuai PDF
+  - Fungsi `calculate_ahp()`: Perhitungan bobot prioritas kriteria
+  - Fungsi `save_perbandingan_ahp()`: Menyimpan matriks perbandingan
+  - Uji konsistensi dengan CR ≤ 0.1
+  
+- **`functions/topsis_logic.php`**: Implementasi lengkap metode TOPSIS
+  - Fungsi `calculate_topsis()`: Ranking supplier berdasarkan nilai preferensi
+  - Normalisasi dengan formula Rij = Xij / √(∑Xij²)
+  - Integrasi dengan bobot AHP untuk matriks terbobot
+
+#### **Admin Interface Files**
+- **`admin/perhitungan_ahp.php`**: Interface input perbandingan berpasangan dengan skala Saaty
+- **`admin/perhitungan_topsis.php`**: Interface perhitungan dan tampilan hasil TOPSIS
+- **`admin/hasil_seleksi.php`**: Tampilan ranking final dengan visualisasi grafik
+- **`admin/input_nilai.php`**: Form input nilai supplier untuk setiap kriteria
+
+#### **Database Structure**
+Sistem menggunakan tabel utama:
+- `kriteria`: Menyimpan kriteria penilaian dan bobotnya
+- `supplier`: Data supplier yang akan dinilai
+- `perbandingan_ahp`: Matriks perbandingan berpasangan AHP
+- `nilai_supplier`: Nilai setiap supplier pada setiap kriteria
+- `hasil_seleksi`: Hasil ranking dan nilai preferensi TOPSIS
+
+#### **Frontend Assets**
+- **Bootstrap**: Framework CSS untuk responsive design
+- **Chart.js**: Library untuk visualisasi grafik hasil seleksi
+- **Font Awesome**: Icon set untuk UI yang menarik
+- **Custom CSS/JS**: Style dan interaksi khusus sistem
 ```
 
 ## 🎓 Referensi
@@ -173,7 +195,7 @@ Sistem ini telah divalidasi menggunakan contoh perhitungan manual dari skripsi d
 Sistem ini dikembangkan berdasarkan skripsi:
 **"Perancangan dan Implementasi Sistem Pendukung Keputusan untuk Seleksi Supplier Baju pada Toko Lidia Fashion Menggunakan Metode AHP dan TOPSIS"**
 
-## 📞 Support By : Andrew Malsar Sianturi
+## 📞 Support
 
 Jika mengalami kendala dalam penggunaan sistem, pastikan:
 - MySQL service berjalan dengan baik

@@ -15,6 +15,9 @@ if (isset($_POST['calculate_topsis'])) {
         $message = $topsis_results['error'];
         $message_type = "danger";
     } else {
+        // Simpan hasil ke session untuk diakses di halaman hasil seleksi
+        $_SESSION['topsis_results'] = $topsis_results;
+        
         if (save_topsis_results($conn, $topsis_results['ranked_supplier'])) {
             $message = "Perhitungan TOPSIS selesai dan hasil disimpan!";
             $message_type = "success";

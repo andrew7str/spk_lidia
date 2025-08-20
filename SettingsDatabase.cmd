@@ -1,6 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
+:dbase
+cls
 echo ============================================
 echo   SCRIPT SETUP DATABASE - AHP (TXT Version)
 echo ============================================
@@ -52,3 +54,4 @@ if %errorlevel% neq 0 (
 )
 
 pause
+goto dbase
