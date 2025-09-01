@@ -83,7 +83,39 @@ function get_existing_comparisons($conn) {
 }
 
 /**
- * Fungsi utama untuk menghitung AHP sesuai dengan contoh di SKRIPSI AHP_TOPSIS.pdf
+ * Fungsi untuk mengisi nilai default sesuai PDF untuk testing
+ * @param mysqli $conn
+ * @return bool
+ */
+function fill_default_ahp_values($conn) {
+    // Nilai default sesuai Tabel IV.5 di PDF
+    $default_comparisons = [
+        [1, 2, 0.2],        // Harga vs Kualitas = 1/5 = 0.2
+        [1, 3, 0.333333],   // Harga vs Waktu = 1/3 = 0.333333
+        [1, 4, 3],          // Harga vs Pelayanan = 3
+        [2, 1, 5],          // Kualitas vs Harga = 5
+        [2, 3, 3],          // Kualitas vs Waktu = 3
+        [2, 4, 7],          // Kualitas vs Pelayanan = 7
+        [3, 1, 3],          // Waktu vs Harga = 3
+        [3, 2, 0.333333],   // Waktu vs Kualitas = 1/3 = 0.333333
+        [3, 4, 5],          // Waktu vs Pelayanan = 5
+        [4, 1, 0.333333],   // Pelayanan vs Harga = 1/3 = 0.333333
+        [4, 2, 0.142857],   // Pelayanan vs Kualitas = 1/7 = 0.142857
+        [4, 3, 0.2],        // Pelayanan vs Waktu = 1/5 = 0.2
+    ];
+
+    $success = true;
+    foreach ($default_comparisons as $comp) {
+        if (!save_perbandingan_ahp($conn, $comp[0], $comp[1], $comp[2])) {
+            $success = false;
+        }
+    }
+
+    return $success;
+}
+
+/**
+ * Fungsi utama untuk menghitung AHP sesuai dengan contoh di revisi_AHP_TOPSIS.pdf
  * @param mysqli $conn
  * @return array|false Array berisi bobot, CI, CR, atau false jika gagal
  */

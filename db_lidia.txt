@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS supplier (
     nama_supplier VARCHAR(100) NOT NULL,
     alamat TEXT,
     telepon VARCHAR(20),
+    deskripsi TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

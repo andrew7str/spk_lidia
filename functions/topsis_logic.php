@@ -49,7 +49,43 @@ function get_topsis_data($conn) {
 }
 
 /**
- * Fungsi utama untuk menghitung TOPSIS sesuai dengan perhitungan manual di SKRIPSI AHP_TOPSIS.pdf
+ * Fungsi untuk mengisi nilai default supplier sesuai PDF untuk testing
+ * @param mysqli $conn
+ * @return bool
+ */
+function fill_default_supplier_values($conn) {
+    // Data supplier dan nilai sesuai Tabel IV.8 di PDF
+    $default_supplier_values = [
+        // Supplier ID => [Harga, Kualitas, Waktu, Pelayanan]
+        1 => [5, 8, 4, 9], // Rezeky (A1)
+        2 => [6, 7, 5, 7], // Duta Modren (A2)
+        3 => [4, 6, 6, 9], // Serasi (A3)
+        4 => [5, 7, 5, 6], // Umi Kids (A4)
+        5 => [3, 9, 7, 8], // Kids (A5)
+    ];
+
+    $success = true;
+    
+    // Hapus nilai lama
+    $conn->query("DELETE FROM nilai_supplier");
+    
+    foreach ($default_supplier_values as $supplier_id => $values) {
+        for ($kriteria_id = 1; $kriteria_id <= 4; $kriteria_id++) {
+            $nilai = $values[$kriteria_id - 1];
+            $stmt = $conn->prepare("INSERT INTO nilai_supplier (id_supplier, id_kriteria, nilai) VALUES (?, ?, ?)");
+            $stmt->bind_param("iii", $supplier_id, $kriteria_id, $nilai);
+            if (!$stmt->execute()) {
+                $success = false;
+            }
+            $stmt->close();
+        }
+    }
+
+    return $success;
+}
+
+/**
+ * Fungsi utama untuk menghitung TOPSIS sesuai dengan perhitungan manual di revisi_AHP_TOPSIS.pdf
  * @param mysqli $conn
  * @return array|false Array berisi hasil TOPSIS, atau false jika gagal
  */

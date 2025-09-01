@@ -8,6 +8,18 @@ $message = '';
 $message_type = '';
 $topsis_results = null;
 
+// --- Logika Isi Nilai Default Supplier ---
+if (isset($_POST['fill_default_supplier_values'])) {
+    require_once '../functions/topsis_logic.php';
+    if (fill_default_supplier_values($conn)) {
+        $message = "Nilai default supplier sesuai PDF berhasil diisi!";
+        $message_type = "success";
+    } else {
+        $message = "Gagal mengisi nilai default supplier.";
+        $message_type = "danger";
+    }
+}
+
 // --- Logika Hitung TOPSIS ---
 if (isset($_POST['calculate_topsis'])) {
     $topsis_results = calculate_topsis($conn);
@@ -48,9 +60,17 @@ $data_for_display = get_topsis_data($conn);
     <div class="form-section">
         <h3>Mulai Perhitungan TOPSIS</h3>
         <p>Pastikan bobot kriteria sudah dihitung dan konsisten dari halaman Perhitungan AHP.</p>
+        <div class="alert alert-info">
+            <strong>Nilai Default PDF:</strong> Klik tombol "Isi Nilai Default PDF" untuk mengisi nilai supplier sesuai dengan contoh di dokumen PDF revisi AHP-TOPSIS.
+        </div>
         <form action="perhitungan_topsis.php" method="POST">
             <div class="form-actions">
-                <button type="submit" name="calculate_topsis" class="btn btn-primary">Hitung TOPSIS Sekarang</button>
+                <button type="submit" name="fill_default_supplier_values" class="btn btn-info">
+                    <i class="fas fa-magic"></i> Isi Nilai Default PDF
+                </button>
+                <button type="submit" name="calculate_topsis" class="btn btn-primary">
+                    <i class="fas fa-calculator"></i> Hitung TOPSIS Sekarang
+                </button>
             </div>
         </form>
     </div>
@@ -244,6 +264,34 @@ $data_for_display = get_topsis_data($conn);
         </div>
     <?php endif; ?>
 <?php endif; ?>
+
+<style>
+.form-section {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.table-section {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.form-actions {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.form-actions .btn {
+    margin: 0 10px;
+    padding: 10px 20px;
+}
+</style>
 
 <?php
 require_once 'includes/footer.php';

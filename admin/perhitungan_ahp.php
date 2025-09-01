@@ -66,6 +66,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_perbandingan'])
     }
 }
 
+// --- Logika Isi Nilai Default ---
+if (isset($_POST['fill_default_values'])) {
+    if (fill_default_ahp_values($conn)) {
+        $message = "Nilai default sesuai PDF berhasil diisi!";
+        $message_type = "success";
+    } else {
+        $message = "Gagal mengisi nilai default.";
+        $message_type = "danger";
+    }
+}
+
 // --- Logika Hitung AHP ---
 if (isset($_POST['calculate_ahp'])) {
     $ahp_results = calculate_ahp($conn);
@@ -182,6 +193,9 @@ $existing_comparisons = get_existing_comparisons($conn);
             </div>
             
             <div class="form-actions">
+                <button type="submit" name="fill_default_values" class="btn btn-info">
+                    <i class="fas fa-magic"></i> Isi Nilai Default PDF
+                </button>
                 <button type="submit" name="submit_perbandingan" class="btn btn-primary">
                     <i class="fas fa-save"></i> Simpan Perbandingan
                 </button>
