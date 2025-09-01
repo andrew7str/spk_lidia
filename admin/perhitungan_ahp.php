@@ -313,6 +313,35 @@ $existing_comparisons = get_existing_comparisons($conn);
                 </div>
                 <?php endif; ?>
             </div>
+
+            <?php if (isset($ahp_results['ahp_reference_values']) && !empty($ahp_results['ahp_reference_values'])): ?>
+            <h4>Nilai Referensi V AHP (Seperti TOPSIS)</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Supplier</th>
+                            <th>Skor</th>
+                            <th>Ranking</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($ahp_results['ahp_reference_values'] as $supplier): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($supplier['nama_supplier']); ?></td>
+                                <td><?php echo number_format($supplier['skor_ahp'], 6); ?></td>
+                                <td><?php echo $supplier['ranking']; ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="alert alert-info">
+                <strong>Catatan:</strong> Nilai Referensi V AHP ini dihitung berdasarkan data supplier sesuai dengan Tabel IV.8 di PDF revisi AHP-TOPSIS. 
+                Hasil ini menunjukkan ranking supplier berdasarkan metode AHP dengan menggunakan bobot kriteria yang telah dihitung.
+            </div>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 <?php endif; ?>
